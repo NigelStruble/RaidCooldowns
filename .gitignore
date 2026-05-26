@@ -1,0 +1,19 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.orig
+
+# Lua build artifacts (if anyone runs luac locally)
+*.luac

@@ -1,0 +1,20 @@
+## Interface: 20505
+## Title: RaidCooldowns
+## Notes: Tracks raid wipe-recovery cooldowns - Soulstone, Rebirth, Divine Intervention, Reincarnation.
+## Version: 0.1.0
+## SavedVariables: RaidCooldownsDB
+## OptionalDeps: Ace3, LibStub, LibSharedMedia-3.0
+## X-Category: Raid
+
+embeds.xml
+
+Core.lua
+Locale.lua
+Abilities.lua
+Roster.lua
+Cooldowns.lua
+Detection.lua
+Targets.lua
+Sync.lua
+Display.lua
+Options.lua
