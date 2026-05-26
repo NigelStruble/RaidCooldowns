@@ -11,6 +11,9 @@ ehthumbs.db
 *.swo
 *~
 
+# Claude Code local state
+.claude/
+
 # Backup files
 *.bak
 *.orig
