@@ -80,34 +80,49 @@ local function buildItems()
 	return items
 end
 
--- 0 = act now (can be resurrected), 1 = other target rows, 2 = plain cooldowns.
-local function urgency(item)
+-- Vertical tiers, top to bottom (lower number sorts higher):
+--   0 rez now      - a Soulstone whose holder died, or a Shaman who can self-rez
+--   1 target buff  - Soulstone on the living, Rebirth prompt, Divine Intervention
+--   2 ready        - a cooldown that is off cooldown
+--   3 on cooldown  - a cooldown still counting down
+local function tier(item)
 	if item.kind == "target" then
 		return item.entry.canRez and 0 or 1
 	end
-	return item.canSelfRez and 0 or 2
+	if item.canSelfRez then return 0 end
+	return item.remaining > 0 and 3 or 2
+end
+
+local function byClassThenName(a, b)
+	if (a.member.class or "") ~= (b.member.class or "") then
+		return (a.member.class or "") < (b.member.class or "")
+	end
+	return (a.member.name or "") < (b.member.name or "")
 end
 
 local function sortItems(items)
 	local mode = ns.db.profile.sort
 	table.sort(items, function(a, b)
-		local ua, ub = urgency(a), urgency(b)
-		if ua ~= ub then return ua < ub end
+		local ta, tb = tier(a), tier(b)
+		if ta ~= tb then return ta < tb end
+
+		-- Tier 0 can mix target and cooldown rows; show targets first.
 		if a.kind ~= b.kind then return a.kind == "target" end
 		if a.kind == "target" then
 			return (a.entry.targetName or "") < (b.entry.targetName or "")
 		end
+
+		-- Ready cooldowns are always grouped by class, then alphabetical.
+		if ta == 2 then return byClassThenName(a, b) end
+
+		-- On-cooldown bars follow the user's Sort choice.
 		if mode == "name" then
 			return (a.member.name or "") < (b.member.name or "")
 		elseif mode == "class" then
-			if (a.member.class or "") ~= (b.member.class or "") then
-				return (a.member.class or "") < (b.member.class or "")
-			end
-			return (a.member.name or "") < (b.member.name or "")
+			return byClassThenName(a, b)
 		end
-		local aOn, bOn = a.remaining > 0, b.remaining > 0
-		if aOn ~= bOn then return aOn end
-		if aOn then return a.remaining < b.remaining end
+		-- Default ("time"): soonest to come off cooldown first.
+		if a.remaining ~= b.remaining then return a.remaining < b.remaining end
 		return (a.member.name or "") < (b.member.name or "")
 	end)
 end
