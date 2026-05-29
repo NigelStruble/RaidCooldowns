@@ -19,6 +19,13 @@ local function rank(source)
 	return source == "observed" and 1 or 2
 end
 
+-- Two "observed" sightings whose cast times fall within this many seconds are
+-- treated as the same cast relayed out of order (or replayed on a state request)
+-- and collapsed. A sighting beyond it is a genuine recast that must override the
+-- stale entry - e.g. a real Reincarnation after a mistaken corpse->alive reading.
+-- Comfortably above relay jitter, far below any tracked ability's cooldown.
+local SAME_CAST_WINDOW = 10
+
 local function isExpired(e)
 	return (e.start + e.duration) <= GetTime()
 end
@@ -84,10 +91,12 @@ function Cooldowns:StartCooldown(guid, key, duration, source, castEpoch, elapsed
 			-- existing is owner-authoritative, incoming is only observed: ignore.
 			return false
 		elseif er == nr then
-			-- both observed: earliest sighting wins, so duplicate reports of one
-			-- cast collapse together regardless of arrival order.
+			-- Both observed: duplicate reports of one cast collapse to the
+			-- earliest sighting, regardless of arrival order. The time window
+			-- keeps this from swallowing a genuine later recast of the ability.
 			if nr == 1 and existing.castEpoch and castEpoch
-				and castEpoch >= existing.castEpoch then
+				and castEpoch >= existing.castEpoch
+				and (castEpoch - existing.castEpoch) <= SAME_CAST_WINDOW then
 				return false
 			end
 			-- same tier and timing: a refresh with nothing new to store.
