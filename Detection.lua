@@ -128,8 +128,11 @@ end
 
 -- A shaman going straight from corpse to alive, with no resurrection to explain
 -- it, has used Reincarnation. Releasing to a ghost first rules it out, as does a
--- recent rez or a consumed soulstone. Fires LIFESTATE_CHANGED on any transition
--- so the display can refresh the dead-shaman highlight.
+-- recent rez or a consumed soulstone. We also require the shaman to be visible:
+-- out of range the combat log never delivers the resurrection cast on them, so a
+-- corpse -> alive jump there could be a different res we simply never saw. Fires
+-- LIFESTATE_CHANGED on any transition so the display can refresh the dead-shaman
+-- highlight.
 function Detection:CheckReincarnation()
 	local reinc = ns.Abilities:Get("reincarnation")
 	if not reinc then return end
@@ -140,7 +143,8 @@ function Detection:CheckReincarnation()
 			if prev ~= cur then
 				if prev == "DEAD" and cur == "ALIVE" and m.guid ~= playerGUID then
 					local rez = recentRez[m.guid]
-					if not rez or (time() - rez) > REZ_WINDOW then
+					local recentlyRezzed = rez and (time() - rez) <= REZ_WINDOW
+					if not recentlyRezzed and UnitIsVisible(m.unit) then
 						if ns.Cooldowns:StartCooldown(m.guid, "reincarnation",
 							reinc.cooldown, "observed", time(), 0) then
 							if syncEnabled() then
