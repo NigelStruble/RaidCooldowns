@@ -20,3 +20,7 @@ ehthumbs.db
 
 # Lua build artifacts (if anyone runs luac locally)
 *.luac
+
+# Release files
+*.zip
+RaidCooldowns/
